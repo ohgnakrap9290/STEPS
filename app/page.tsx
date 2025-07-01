@@ -6,38 +6,36 @@ import { motion } from "framer-motion";
 // Pretendard 웹폰트 적용
 const fontUrl = "https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css";
 
-// Sidebar folder structure
+// 예시용 sidebar 구조와 컬러
 const sidebar = {
   LANGUAGE: ["TOEIC_RC", "TOEIC_LC", "JLPT"],
   CODING: ["JAVA", "PYTHON", "C++"],
   HEALTH: ["GYM"],
 };
 
-const itemColors = {
+const itemColors: Record<string, string> = {
   "TOEIC_RC": "#F97316",
   "TOEIC_LC": "#FB923C",
   "JLPT": "#E879F9",
-  "JAVA": "#0EA5E9",   // 더 밝은 파랑 (Sky Blue)
+  "JAVA": "#0EA5E9",
   "PYTHON": "#60A5FA",
-  "C++": "#6366F1",    // 보라빛 파랑 (Indigo)
+  "C++": "#6366F1",
   "GYM": "#16A34A",
 };
 
 const grayLight = "#E5E7EB";
 
-// Format YYYY‑MM‑DD
-function formatDate(d) {
+function formatDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
 export default function StepsApp() {
   const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth());
-  const [selected, setSelected] = useState(null); // sub-item selected
-  const [data, setData] = useState({});
+  const [year, setYear] = useState<number>(today.getFullYear());
+  const [month, setMonth] = useState<number>(today.getMonth());
+  const [selected, setSelected] = useState<string | null>(null);
+  const [data, setData] = useState<Record<string, Record<string, boolean>>>({});
 
-  // Load & save localStorage
   useEffect(() => {
     const saved = localStorage.getItem("stepsData");
     if (saved) setData(JSON.parse(saved));
@@ -49,8 +47,7 @@ export default function StepsApp() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstWeekday = new Date(year, month, 1).getDay();
 
-  // Month navigation
-  const changeMonth = (delta) => {
+  const changeMonth = (delta: number) => {
     const dt = new Date(year, month + delta, 1);
     setYear(dt.getFullYear());
     setMonth(dt.getMonth());
@@ -59,24 +56,21 @@ export default function StepsApp() {
 
   const allItems = Object.values(sidebar).flat();
 
-  // Toggle a specific sub-item on a specific date
-  const toggleDate = (item, dateStr) => {
+  const toggleDate = (item: string, dateStr: string) => {
     setData(d => ({
       ...d,
       [item]: { ...(d[item] || {}), [dateStr]: !d[item]?.[dateStr] }
     }));
   };
 
-  // 달력형 Overview (칸 안에 도트 정렬)
+  // Overview Calendar
   const OverviewCalendar = () => {
     const todayStr = formatDate(new Date());
     const cells = Array(firstWeekday).fill(null)
       .concat([...Array(daysInMonth)].map((_, i) => i + 1));
-    const maxDotsPerRow = 4; // 한 줄에 도트 4개
-
+    const maxDotsPerRow = 4;
     return (
       <div className="mt-2">
-        {/* 카테고리 라벨 */}
         <div className="flex flex-wrap gap-4 mb-5">
           {Object.entries(sidebar).map(([group, items]) => (
             <div key={group} className="flex flex-col items-start">
@@ -90,7 +84,6 @@ export default function StepsApp() {
             </div>
           ))}
         </div>
-        {/* 달력 */}
         <div>
           <div className="grid grid-cols-7 gap-2 text-xs font-semibold text-gray-700 mb-1">
             {["SUN","MON","TUE","WED","THU","FRI","SAT"].map(w => (
@@ -98,12 +91,11 @@ export default function StepsApp() {
             ))}
           </div>
           <div className="grid grid-cols-7 gap-2">
-            {cells.map((d, i) => {
+            {cells.map((d: number | null, i: number) => {
               if (!d) return <div key={i} className="h-20"></div>;
               const dateObj = new Date(year, month, d);
               const dateStr = formatDate(dateObj);
               const isToday = dateStr === todayStr;
-              // 도트 2줄 정렬
               const dots = allItems.map(it => ({
                 it,
                 checked: data[it]?.[dateStr]
@@ -179,10 +171,10 @@ export default function StepsApp() {
     );
   };
 
-  // DetailCalendar(카테고리별 달력) - 내가 누른 버튼만 애니메이션
+  // DetailCalendar(카테고리별 달력)
   const DetailCalendar = () => {
     if (!selected) return null;
-    const cells = [];
+    const cells: (number | null)[] = [];
     const todayStr = formatDate(new Date());
     for (let i = 0; i < firstWeekday; i++) {
       cells.push(null);
@@ -198,7 +190,7 @@ export default function StepsApp() {
           {["SUN","MON","TUE","WED","THU","FRI","SAT"].map(w=><div key={w} className="text-center">{w}</div>)}
         </div>
         <div className="grid grid-cols-7 gap-2">
-          {cells.map((d, i) => {
+          {cells.map((d: number | null, i: number) => {
             if (!d) return <div key={i} className="h-14"></div>;
             const dateObj = new Date(year, month, d);
             const dateStr = formatDate(dateObj);
@@ -210,9 +202,9 @@ export default function StepsApp() {
                 whileTap={{ scale: 0.92 }}
                 whileHover={{ scale: checked ? 1.06 : 1.03 }}
                 animate={{
-                  backgroundColor: checked ? itemColors[selected] : "#F3F4F6",
+                  backgroundColor: checked ? itemColors[selected!] : "#F3F4F6",
                   color: checked ? "#fff" : "#222",
-                  borderColor: isToday ? "#10B981" : (checked ? itemColors[selected] : "#E5E7EB"),
+                  borderColor: isToday ? "#10B981" : (checked ? itemColors[selected!] : "#E5E7EB"),
                   scale: checked ? 1.03 : 1,
                 }}
                 transition={{ type: "spring", stiffness: 340, damping: 18 }}
@@ -222,7 +214,7 @@ export default function StepsApp() {
                   ${checked ? "" : "hover:bg-gray-200"}
                   focus:outline-none
                 `}
-                onClick={() => toggleDate(selected, dateStr)}
+                onClick={() => toggleDate(selected!, dateStr)}
                 title={dateStr}
               >
                 <span className="text-base">{d}</span>
@@ -276,14 +268,14 @@ export default function StepsApp() {
       <div className="min-h-screen bg-gray-50 p-4 flex flex-col md:flex-row gap-4">
         {/* Sidebar */}
         <nav className="w-full md:w-48 bg-white shadow rounded-xl p-4 space-y-2 sticky top-4 h-[90vh] overflow-auto">
-          <motion.button layout whileTap={{scale:0.95}} className={`w-full text-left font-bold py-2 ${!selected?"bg-gray-200":""}`} onClick={()=>setSelected(null)}>
+          <motion.button whileTap={{scale:0.95}} className={`w-full text-left font-bold py-2 ${!selected?"bg-gray-200":""}`} onClick={()=>setSelected(null)}>
             Overview
           </motion.button>
           {Object.entries(sidebar).map(([group, items])=>(
             <div key={group}>
               <div className="text-xs font-semibold uppercase mt-2 mb-1">{group}</div>
               {items.map(item=>(
-                <motion.button layout whileTap={{scale:0.95}}
+                <motion.button whileTap={{scale:0.95}}
                   key={item}
                   className={`w-full text-left py-1 pl-2 rounded-sm ${selected===item?"bg-gray-200":""}`}
                   onClick={()=>setSelected(item)}
@@ -298,9 +290,9 @@ export default function StepsApp() {
         {/* Main Calendar */}
         <main className="flex-1 bg-white shadow rounded-xl p-4 overflow-auto max-h-[90vh]">
           <div className="flex justify-between items-center mb-2">
-            <motion.button layout whileTap={{scale:0.9}} onClick={()=>changeMonth(-1)} className="px-2 bg-gray-200 rounded">◀</motion.button>
+            <motion.button whileTap={{scale:0.9}} onClick={()=>changeMonth(-1)} className="px-2 bg-gray-200 rounded">◀</motion.button>
             <span className="font-bold text-lg">{year} / {month+1}</span>
-            <motion.button layout whileTap={{scale:0.9}} onClick={()=>changeMonth(1)} className="px-2 bg-gray-200 rounded">▶</motion.button>
+            <motion.button whileTap={{scale:0.9}} onClick={()=>changeMonth(1)} className="px-2 bg-gray-200 rounded">▶</motion.button>
           </div>
           {selected? <DetailCalendar/> : <OverviewCalendar/>}
         </main>
